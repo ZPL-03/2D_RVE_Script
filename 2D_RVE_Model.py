@@ -217,48 +217,68 @@ def pairBoundaryNodes(slave_nodes, master_nodes, tolerance, coord_index):
     return paired_nodes
 
 
-def applyPeriodicConstraints(model, instanceName, node_pairs, pair_type):
+def applyPeriodicConstraints(model, instanceName, node_pairs, pair_type, constrained_nodes_set):
     """为已配对的节点施加约束方程来实现周期性边界条件
+       (增加 constrained_nodes_set 避免重复约束)
 
     参数:
         model: Abaqus模型对象
         instanceName: 实例名称
-        node_pairs: 节点配对列表
+        node_pairs: 节点配对列表 [(slave_node, master_node), ...]
         pair_type: 配对类型（'Left-Right' 或 'Bottom-Top'）
+        constrained_nodes_set: 一个包含已被约束的从节点标签的集合(set)
 
     功能:
         为每对节点创建约束方程: u_slave - u_master + u_ref = 0
+        跳过已在 constrained_nodes_set 中的从节点。
     """
     r_assy = model.rootAssembly
     inst = r_assy.instances[instanceName]
 
     if pair_type == 'Left-Right':
         ref_point_name = 'set_RefPoint_LR'
-        tag1, tag2 = 'L', 'R'
+        tag1, tag2 = 'L', 'R'  # tag1 = Slave (Left), tag2 = Master (Right)
         coeffs = (1.0, -1.0, 1.0)
     elif pair_type == 'Bottom-Top':
         ref_point_name = 'set_RefPoint_BT'
-        tag1, tag2 = 'B', 'T'
+        tag1, tag2 = 'B', 'T'  # tag1 = Slave (Bottom), tag2 = Master (Top)
         coeffs = (1.0, -1.0, 1.0)
     else:
+        print("    ERROR: Unknown pair_type in applyPeriodicConstraints: %s" % pair_type)
         return
 
+    nodes_constrained_in_this_call = 0
+
     for i, (node1, node2) in enumerate(node_pairs):
+        # node1 是从节点 (slave), node2 是主节点 (master)
+
+        # --- 检查从节点是否已经被之前的约束处理过 (例如角点) ---
+        if node1.label in constrained_nodes_set:
+            continue  # 跳过此节点对，避免重复约束
+
+        # --- 如果从节点未被约束，则创建临时节点集并施加约束 ---
         set1_name = 'set_Node-%s-%d' % (tag1, i + 1)
         set2_name = 'set_Node-%s-%d' % (tag2, i + 1)
         r_assy.Set(nodes=inst.nodes.sequenceFromLabels(labels=(node1.label,)), name=set1_name)
         r_assy.Set(nodes=inst.nodes.sequenceFromLabels(labels=(node2.label,)), name=set2_name)
 
+        # 约束 DOF 1 (X方向位移 U1)
         model.Equation(name='Eq-%s%s-X-%d' % (tag1, tag2, i + 1),
                        terms=((coeffs[0], set1_name, 1),
                               (coeffs[1], set2_name, 1),
                               (coeffs[2], ref_point_name, 1)))
 
+        # 约束 DOF 2 (Y方向位移 U2)
         model.Equation(name='Eq-%s%s-Y-%d' % (tag1, tag2, i + 1),
                        terms=((coeffs[0], set1_name, 2),
                               (coeffs[1], set2_name, 2),
                               (coeffs[2], ref_point_name, 2)))
 
+        # --- 将处理过的从节点标签添加到集合中 ---
+        constrained_nodes_set.add(node1.label)
+        nodes_constrained_in_this_call += 1
+
+    print("    Applied %s constraints to %d new slave nodes." % (pair_type, nodes_constrained_in_this_call))
 
 # =================================================================
 #                 纤维排布算法模块
@@ -467,7 +487,7 @@ def buildAllFiberCenters(fiber_centers, rveSize, fiberRadius):
         fiberRadius: 纤维半径
 
     返回:
-        unique_centers: 包含所有周期性镜像的纤维中心列表
+        all_fiber_centers: 包含所有周期性镜像的纤维中心列表
 
     功能:
         为靠近边界的纤维创建周期性镜像，用于准确判断面的归属
@@ -507,18 +527,7 @@ def buildAllFiberCenters(fiber_centers, rveSize, fiberRadius):
             if dist_to_corner < fiberRadius:
                 all_fiber_centers.append((xt - rveSize[0], yt + rveSize[1]))
 
-    unique_centers = []
-    tolerance = 1e-6
-    for center in all_fiber_centers:
-        is_duplicate = False
-        for existing in unique_centers:
-            if abs(center[0] - existing[0]) < tolerance and abs(center[1] - existing[1]) < tolerance:
-                is_duplicate = True
-                break
-        if not is_duplicate:
-            unique_centers.append(center)
-
-    return unique_centers
+    return all_fiber_centers
 
 
 def getFaceCenterFromVertices(face):
@@ -1248,25 +1257,39 @@ def createRVEModel(modelName='Model-1',
 
     pairing_tolerance = globalSeedSize * pairingToleranceFactor
 
+    # Left(Slave) vs Right(Master)
     if len(nodes_left) <= len(nodes_right):
         lr_pairs = pairBoundaryNodes(nodes_left, nodes_right, pairing_tolerance, 1)
     else:
         lr_pairs = [(p[1], p[0]) for p in pairBoundaryNodes(nodes_right, nodes_left, pairing_tolerance, 1)]
 
+    # Bottom(Slave) vs Top(Master)
     if len(nodes_bottom) <= len(nodes_top):
         bt_pairs = pairBoundaryNodes(nodes_bottom, nodes_top, pairing_tolerance, 0)
     else:
         bt_pairs = [(p[1], p[0]) for p in pairBoundaryNodes(nodes_top, nodes_bottom, pairing_tolerance, 0)]
 
-    print("  Left/Right: %d pairs from %d/%d nodes" %
+    print("\n  Boundary Node Pairing Results:")
+    print("    Left/Right: %d pairs from %d/%d nodes (Slave/Master)" %
           (len(lr_pairs), len(nodes_left), len(nodes_right)))
-    print("  Bottom/Top: %d pairs from %d/%d nodes" %
+    print("    Bottom/Top: %d pairs from %d/%d nodes (Slave/Master)" %
           (len(bt_pairs), len(nodes_bottom), len(nodes_top)))
 
-    applyPeriodicConstraints(a, 'RVE-2D-1', lr_pairs, 'Left-Right')
-    applyPeriodicConstraints(a, 'RVE-2D-1', bt_pairs, 'Bottom-Top')
+    unpaired_nodes_total = (len(nodes_left) - len(lr_pairs)) + (len(nodes_right) - len(lr_pairs)) + \
+                           (len(nodes_bottom) - len(bt_pairs)) + (len(nodes_top) - len(bt_pairs))
+    if unpaired_nodes_total > 0:
+        print("    WARNING: %d nodes unpaired. Check mesh or tolerance." % unpaired_nodes_total)
+    else:
+        print("    SUCCESS: All boundary nodes paired successfully!")
 
-    print("Step 6 Complete.")
+    # 初始化一个空的集合，用于跟踪已经被约束过的从节点标签
+    constrained_nodes = set()
+    print("\n  Applying Left-Right Constraints...")
+    applyPeriodicConstraints(a, 'RVE-2D-1', lr_pairs, 'Left-Right', constrained_nodes)
+    print("\n  Applying Bottom-Top Constraints...")
+    applyPeriodicConstraints(a, 'RVE-2D-1', bt_pairs, 'Bottom-Top', constrained_nodes)
+
+    print("\nStep 6 Complete.")
 
     print("\n" + "=" * 70)
     print("RVE MODEL GENERATION COMPLETED SUCCESSFULLY")

@@ -503,7 +503,7 @@ GLOBAL_SEED_SIZE = 0.02
   author = {刘正鹏},
   title = {ABAQUS二维RVE建模工具},
   year = {2025},
-  url = {https://github.com/yourusername/2D_RVE_Model},
+  url = {https://github.com/ZPL-03/2D_RVE_Model},
   version = {1.0}
 }
 ```

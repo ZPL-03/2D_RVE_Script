@@ -235,7 +235,7 @@ If you use this code in your research, please cite:
   author = {Liu, Zhengpeng},
   title = {2D RVE Model Generator for ABAQUS},
   year = {2025},
-  url = {https://github.com/yourusername/2D_RVE_Model},
+  url = {https://github.com/ZPL-03/2D_RVE_Model},
   version = {1.0}
 }
 ```
@@ -243,7 +243,7 @@ If you use this code in your research, please cite:
 ## 👥 Author
 
 **Liu Zhengpeng (刘正鹏)**
-- GitHub: [@小盆i](https://github.com/yourusername)
+- GitHub: [@小盆i](https://github.com/ZPL-03)
 - Email: 1370872708@qq.com / Zhengpeng0105@gmail.com
 - Technical Blog: CSDN/知乎 @小盆i
 
@@ -262,8 +262,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📮 Contact & Support
 
-- **Issues**: Please report bugs and request features via [GitHub Issues](https://github.com/yourusername/2D_RVE_Model/issues)
-- **Discussions**: Join discussions in [GitHub Discussions](https://github.com/yourusername/2D_RVE_Model/discussions)
+- **Issues**: Please report bugs and request features via [GitHub Issues](https://github.com/ZPL-03/2D_RVE_Model/issues)
+- **Discussions**: Join discussions in [GitHub Discussions](https://github.com/ZPL-03/2D_RVE_Model/discussions)
 - **Email**: For private inquiries, contact Zhengpeng0105@gmail.com
 
 ---
@@ -312,7 +312,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 1. 克隆仓库：
 ```bash
-git clone https://github.com/yourusername/2D_RVE_Model.git
+git clone https://github.com/ZPL-03/2D_RVE_Model.git
 cd 2D_RVE_Model
 ```
 
@@ -511,7 +511,7 @@ GLOBAL_SEED_SIZE = 0.02
 ## 👥 作者
 
 **刘正鹏 (Liu Zhengpeng)**
-- GitHub: [@小盆i](https://github.com/yourusername)
+- GitHub: [@小盆i](https://github.com/ZPL-03)
 - 邮箱：1370872708@qq.com / Zhengpeng0105@gmail.com
 - 技术博客：CSDN/知乎 @小盆i
 

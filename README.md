@@ -44,7 +44,7 @@ All required modules are included in ABAQUS installation:
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/yourusername/2D_RVE_Model.git
+git clone https://github.com/ZPL-03/2D_RVE_Model.git
 cd 2D_RVE_Model
 ```
 
@@ -530,8 +530,8 @@ GLOBAL_SEED_SIZE = 0.02
 
 ## 📮 联系与支持
 
-- **问题反馈**：通过[GitHub Issues](https://github.com/yourusername/2D_RVE_Model/issues)报告错误和请求功能
-- **讨论交流**：在[GitHub Discussions](https://github.com/yourusername/2D_RVE_Model/discussions)参与讨论
+- **问题反馈**：通过[GitHub Issues](https://github.com/ZPL-03/2D_RVE_Model/issues)报告错误和请求功能
+- **讨论交流**：在[GitHub Discussions](https://github.com/ZPL-03/2D_RVE_Model/discussions)参与讨论
 - **私人咨询**：请发送邮件至 Zhengpeng0105@gmail.com
 
 ## 📸 示例展示
